@@ -1,0 +1,325 @@
+{
+  "edit_profile_page": {
+    "title": "Edit Profile",
+    "upload_photo": "Upload Photo",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "gender": "Gender",
+    "date_of_birth": "Date of Birth",
+    "log_out": "Log Out"
+  },
+  "notifications_page": {
+    "title": "Notifications",
+    "sms_notifications": "Allow SMS Notifications",
+    "push_notifications": "Push Notifications",
+    "no_notification": "No notification"
+  },
+  "account_page": {
+    "title": "Account",
+    "edit": "Edit",
+    "register": "Register",
+    "language": "Language",
+    "password": "Password",
+    "notifications": "Notifications",
+    "invite_friends": "Invite friends",
+    "support": "Contact Support",
+    "about_app": "About the App",
+    "loading_profile": "Loading profile…"
+  },
+  "sign_in_page": {
+    "title": "Sign In",
+    "email_label": "Email",
+    "password_label": "Password",
+    "general_error": "Please enter email and password",
+    "email_error": "Please enter an email",
+    "password_error": "Please enter a password",
+    "login_button": "Sign In",
+    "forgot_password_link": "Forgot Password?",
+    "register_link": "Register",
+    "alternative_sign_in": "Or sign in with",
+    "apple_id_button": "Apple ID",
+    "google_button": "Google",
+    "facebook_button": "Facebook",
+    "login_error": "Incorrect email or password"
+  },
+  "registration_page": {
+    "title": "Registration",
+    "email_label": "Email",
+    "email_error_empty": "Please enter an email",
+    "email_error_invalid": "Invalid email format",
+    "email_error_registered": "This email is already registered",
+    "next_button": "Next",
+    "alternative_sign_in": "Or sign in with",
+    "apple_id_button": "Apple ID",
+    "google_button": "Google",
+    "facebook_button": "Facebook",
+    "already_have_account": "Already have an account?",
+    "login_link": "Sign In",
+    "confirmation_code_title": "Confirmation Code",
+    "code_sent_description": "We've sent a code to {email}",
+    "code_label": "Code",
+    "enter_code_error": "Please enter the confirmation code",
+    "invalid_code_error": "Invalid confirmation code",
+    "submit_button": "Submit",
+    "personal_info_title": "Personal Information",
+    "first_name_label": "First Name*",
+    "last_name_label": "Last Name",
+    "phone_label": "Phone Number",
+    "birthdate_label": "Date of Birth*",
+    "referral_code_label": "Referral Code",
+    "gender_label": "Your Gender",
+    "male_option": "Male",
+    "female_option": "Female",
+    "agreement_text": "I consent to the processing of personal data in accordance with the ",
+    "agreement_click_text": "user agreement.",
+    "privacy_text": "I accept the terms of the ",
+    "privacy_click_text": "privacy policy.",
+    "first_name_error": "Please enter a first name",
+    "birthdate_error": "Please enter your date of birth",
+    "age_restriction_error": "You must be at least 18 years old",
+    "phone_error": "The phone number should only contain digits",
+    "agreement_error": "You must accept the terms",
+    "general_error": "Invalid registration data",
+    "password_title": "Password",
+    "create_password_description": "Create a password for your account",
+    "password_label": "Password",
+    "confirm_password_label": "Confirm Password",
+    "password_error": "Please enter a password",
+    "password_too_short_error": "Password must be at least 8 characters long",
+    "confirm_password_error": "Please confirm your password",
+    "password_mismatch_error": "Passwords do not match",
+    "register_button": "Register",
+    "permissions_title": "Permissions",
+    "camera_permission_text": "To take and add photos",
+    "camera_permission_headline": "Camera",
+    "notifications_permission_text": "So you don’t miss important updates",
+    "notifications_permission_headline": "Notifications",
+    "decline_button": "Decline",
+    "confirm_button": "Confirm",
+    "referral_code_description": "Enter the phone number of the person who recommended you download the app"
+  },
+  "forgot_password_page": {
+    "title": "Forgot Password?",
+    "description": "Enter the email address to send a confirmation code",
+    "email_label": "Email",
+    "send_button": "Send",
+    "enter_email_error": "Please enter an email",
+    "invalid_email_error": "Invalid email format",
+    "code_title": "Confirmation Code",
+    "code_sent_description": "We've sent a code to {email}",
+    "code_label": "Code",
+    "submit_code": "Submit",
+    "enter_code_error": "Please enter the confirmation code",
+    "invalid_code_error": "Invalid confirmation code",
+    "create_password_title": "New Password",
+    "create_password_description": "Create a new password for your account",
+    "new_password_label": "New Password",
+    "confirm_new_password_label": "Confirm New Password",
+    "password_error": "Password must be at least 8 characters",
+    "password_mismatch_error": "Passwords do not match",
+    "confirm_password_error": "Please confirm the password",
+    "login_button": "Sign In"
+  },
+  "support_page": {
+    "title": "Support",
+    "write_message": "Write a message...",
+    "message_date_format": "dd MMMM yyyy",
+    "sending_failed": "Failed to send message"
+  },
+  "catalog_page": {
+    "title": "Recipe Catalog",
+    "start_search": "Start searching for recipes",
+    "description": "Description",
+    "filter": "Filter",
+    "sort_by_popularity": "By popularity",
+    "sort_alphabet_asc": "Alphabetically (A-Z)",
+    "sort_alphabet_desc": "Alphabetically (Z-A)",
+    "sort_by_video": "By video availability",
+    "mark_as_prepared": "Mark as prepared",
+    "prepared": "Prepared",
+    "bonus_take_title": "You got 15 points!",
+    "bonus_take_subtitle": "Congratulations! Now you know how to make a “{name}”",
+    "good": "Ok",
+    "alco": "Alcoholic",
+    "nonAlco": "Non-alcoholic"
+  },
+  "my_cocktails_page": {
+    "title": "My Recipes ({count})",
+    "no_cocktails": "You don't have any cocktails yet.",
+    "start_search": "Start searching for recipes",
+    "publish": "Publish"
+  },
+  "store": {
+    "title": "Store",
+    "empty_message": "The store is empty for now)",
+    "default_product_name": "Product",
+    "description": "Description",
+    "marketplace_yandex": "Yandex Market",
+    "buy_on": "Buy on {count}",
+    "price_from": "from {count} ₽",
+    "order_now": "Order Now",
+    "how_to_use": "How to use",
+    "no_description": "No description"
+  },
+  "change_pass_pages": {
+    "enter_your_email": "Enter your email",
+    "enter_correct_email": "Enter a valid email",
+    "change_pass": "Change Password",
+    "enter_email_for_code": "Enter your email to receive the confirmation code",
+    "enter_code": "Enter the confirmation code",
+    "wrong_code": "Incorrect confirmation code",
+    "email": "Email",
+    "code_sent": "We've sent a code to {email}",
+    "submit_code": "Submit Code",
+    "resend_code": "Resend Code",
+    "timer_expired": "Time is up, please try again",
+    "confirmation_code": "Confirmation Code",
+    "new_password": "New Password",
+    "repeat_new_password": "Repeat New Password",
+    "password_saved": "Password changed",
+    "create_password": "Create a password for your account",
+    "password_mismatch": "Passwords do not match",
+    "password_too_short": "Password must be at least 8 characters"
+  },
+  "home": {
+    "greeting": "Hello, {name}!",
+    "greeting_default": "Hello!",
+    "register_button": "Register",
+    "my_points": "My Points",
+    "points": "{count} points",
+    "my_cocktails": "My Cocktails",
+    "recipes": "{count} recipes",
+    "favorites": "Favorites",
+    "favorite_recipes": "{count} favorite recipes",
+    "notifications": "Notifications",
+    "new_notifications": "{count} new",
+    "select_cocktail_button": "Select a cocktail"
+  },
+  "new_recipe": {
+    "title": "New Recipe",
+    "photo": "Photo",
+    "video": "Video",
+    "youtube_link": "YouTube Video Link",
+    "description": "Description",
+    "alcoholic_drinks": "Alcoholic Drinks",
+    "non_alcoholic_drinks": "Non-Alcoholic Drinks",
+    "ingredients": "Ingredients",
+    "tools": "Tools",
+    "steps": "Preparation Steps",
+    "name": "Cocktail name*",
+    "error_title": "Enter a title",
+    "error_ingredients": "Select at least 1 ingredient",
+    "error_tools": "Select at least 1 tool",
+    "cocktail_created": "Cocktail created"
+  },
+  "cocktail_instructions": {
+    "title": "Preparation",
+    "no_instructions": "No preparation instructions",
+    "step": "Step {step}"
+  },
+  "bonus_screen": {
+    "title": "My Points",
+    "points": "{points} points",
+    "redeem_points_button": "Redeem Points",
+    "no_points": "0 points",
+    "history_title": "Bonus History",
+    "history": "History",
+    "copied": "Promo code copied",
+    "not_enough_points": "There are not enough points to purchase a promo code",
+    "purchased": "Purchased!"
+  },
+  "buttons": {
+    "confirm": "Confirm",
+    "choose": "Choose",
+    "cancel": "Cancel",
+    "back": "Back",
+    "send": "Send",
+    "skip": "Skip",
+    "save": "Save",
+    "save_changes": "Save Changes",
+    "sign_out": "Sign Out",
+    "change": "Edit"
+  },
+  "errors": {
+    "empty_field": "Field cannot be empty",
+    "invalid_code": "The code entered is incorrect",
+    "email_incorrect": "Incorrect email",
+    "server_error": "Connection troubles",
+    "error": "Error"
+  },
+  "timer": {
+    "time_left": "Resend code in ",
+    "time_left_seconds": "00:{seconds}",
+    "timer_expired": "Time is up, try resending the code."
+  },
+  "exit_account": {
+    "title": "Log Out",
+    "confirmation": "Are you sure you want to log out?",
+    "cancel": "Cancel"
+  },
+  "about_app": {
+    "title": "About the App",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_use": "Terms of Use",
+    "app_version": "App Version"
+  },
+  "alcohol_popup": {
+    "title": "Alcoholic Drinks"
+  },
+  "cocktail_selection_page": {
+    "cocktail_selection": "Cocktail Selection",
+    "choose": "Select"
+  },
+  "registration_popup": {
+    "title": "Cocktail Selection",
+    "message": "To use the 'Cocktail Selection' feature, you need to be a registered user.",
+    "register_button": "Register"
+  },
+  "favorite_cocktails": {
+    "title": "Favorite Recipes",
+    "no_recipes": "No favorite recipes",
+    "in_favorites": "In favorites",
+    "add_to_favorites": "Add to favorites"
+  },
+  "ingredients_list": {
+    "title": "Ingredients"
+  },
+  "tools_list": {
+    "title": "Tools"
+  },
+  "cocktail_selection": {
+    "step_base": "Choose the cocktail base:",
+    "additional_ingredients": "Additional ingredients:",
+    "show_all": "Show all",
+    "hide": "Hide",
+    "selected": "selected",
+    "recipes": "recipes",
+    "no_cocktails": "No cocktails found",
+    "current_selection": "Current selection",
+    "description": "You can remove some ingredients from the list here or proceed to full selection editing by clicking “Edit“",
+    "cocktail_base": "Base of the cocktail"
+  },
+  "search": {
+    "search": "Search",
+    "recording": "Recording in progress..."
+  },
+  "step_indicator": {
+    "alcohol": "Alcohol",
+    "additional_ingredients": "Additional Ingredients",
+    "selection": "Selection"
+  },
+  "bottom_nav": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "store": "Store",
+    "account": "Account"
+  },
+  "moderation_status": {
+    "draft": "Draft",
+    "rejected": "Rejected",
+    "pending": "Pending",
+    "approved": "Approved",
+    "unknown": "Unknown"
+  }
+}
