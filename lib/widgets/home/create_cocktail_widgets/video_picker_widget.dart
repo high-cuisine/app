@@ -63,9 +63,6 @@ class VideoPickerWidget extends StatelessWidget {
         .read<CocktailCreationBloc>()
         .add(UpdateVideoThumbnailEvent(File(thumbX.path)));
 
-    // 2) И — главное! — шлём событие загрузки в S3
-    ctx.read<CocktailCreationBloc>().add(UploadVideoToS3Event(file));
-
     final File thumb = File(thumbX.path);
   }
 

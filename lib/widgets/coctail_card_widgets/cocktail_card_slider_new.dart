@@ -37,10 +37,16 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
   void initState() {
     super.initState();
 
-    if (widget.videoUrl != null && widget.videoUrl!.isNotEmpty) {
-      // Check if the video URL is a YouTube URL
-      if (_isYouTubeUrl(widget.videoUrl!)) {
-        final videoId = _extractYouTubeVideoId(widget.videoUrl!);
+    final fileUrl = widget.cocktail.videoFileUrl?.trim();
+    final url = (widget.videoUrl ?? widget.cocktail.videoUrl)?.trim();
+    final legacyKey =
+        (widget.videoAvsKey ?? widget.cocktail.video_aws_key)?.trim();
+
+    if (fileUrl != null && fileUrl.isNotEmpty) {
+      _initNetworkVideo(_resolvePlaybackUri(fileUrl));
+    } else if (url != null && url.isNotEmpty) {
+      if (_isYouTubeUrl(url)) {
+        final videoId = _extractYouTubeVideoId(url);
         if (videoId != null) {
           _youtubeVideoId = videoId;
           debugPrint('YouTube video ID extracted from URL: $videoId');
@@ -49,35 +55,22 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
               'Failed to extract YouTube video ID from URL: ${widget.videoUrl}');
         }
       } else {
-        // It's a direct video URL (S3, etc.)
-        _initVideoPlayer();
+        _initNetworkVideo(_resolvePlaybackUri(url));
       }
-    } else {
-      debugPrint('Video URL is empty or null');
-    }
-
-    if (widget.videoAvsKey != null && widget.videoAvsKey!.isNotEmpty) {
-      _youtubeVideoId = widget.videoAvsKey;
-      debugPrint('YouTube video ID from videoAvsKey: ${widget.videoAvsKey}');
-    } else {
-      debugPrint('YouTube video key is empty or null');
+    } else if (legacyKey != null && legacyKey.isNotEmpty) {
+      _initNetworkVideo(Uri.parse('$_s3BaseUrl$legacyKey'));
     }
   }
 
-  void _initVideoPlayer() {
+  Uri _resolvePlaybackUri(String raw) {
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return Uri.parse(raw);
+    }
+    return Uri.parse('$_s3BaseUrl$raw');
+  }
+
+  void _initNetworkVideo(Uri videoUri) {
     try {
-      // Check if the URL is already a complete URL or just a path
-      final videoUrl = widget.videoUrl!;
-      final Uri videoUri;
-
-      if (videoUrl.startsWith('http://') || videoUrl.startsWith('https://')) {
-        // Already a complete URL
-        videoUri = Uri.parse(videoUrl);
-      } else {
-        // Relative path, append to S3 base URL
-        videoUri = Uri.parse(_s3BaseUrl + videoUrl);
-      }
-
       debugPrint('Initializing video player with URL: $videoUri');
       _s3VideoController = VideoPlayerController.networkUrl(videoUri)
         ..initialize().then((_) {

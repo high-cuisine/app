@@ -12,7 +12,6 @@ class CocktailCreationState {
   final String title;
   final String description;
   final File? videoFile;
-  final String? videoAwsKey;
   final String videoUrl;
   final bool isLoading;
   final bool isSubmitting;
@@ -31,7 +30,6 @@ class CocktailCreationState {
       this.title = '',
       this.description = '',
       this.videoFile,
-      this.videoAwsKey,
       this.videoUrl = '',
       this.photo,
       this.isLoading = false,
@@ -52,7 +50,6 @@ class CocktailCreationState {
     String? title,
     String? description,
     File? videoFile,
-    String? videoAwsKey,
     String? videoUrl,
     bool? isLoading,
     bool? isSubmitting,
@@ -72,7 +69,6 @@ class CocktailCreationState {
       title: title ?? this.title,
       description: description ?? this.description,
       videoFile: videoFile ?? this.videoFile,
-      videoAwsKey: videoAwsKey ?? this.videoAwsKey,
       videoUrl: videoFile != null ? '' : videoUrl ?? this.videoUrl,
       isLoading: isLoading ?? this.isLoading,
       isSubmitting: isSubmitting ?? this.isSubmitting,

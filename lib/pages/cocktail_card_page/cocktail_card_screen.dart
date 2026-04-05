@@ -148,7 +148,7 @@ class _CocktailCardScreenState extends State<CocktailCardScreen> {
                             width: double.infinity,
                             height: double.infinity,
                             child: CocktailCardSlider(
-                              // cocktail: currentCocktail,
+                              videoFileUrl: currentCocktail.videoFileUrl,
                               videoUrl: currentCocktail.videoUrl,
                               imageUrls: currentCocktail.imageUrl != null
                                   ? [currentCocktail.imageUrl!]

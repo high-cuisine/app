@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aws_s3_upload_lite/aws_s3_upload_lite.dart';
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:meta/meta.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../models/cocktail_list_model.dart';
 import '../../models/create_cocktail_model.dart';
@@ -45,9 +43,7 @@ class CocktailCreationBloc
     on<UpdateRecipeDescriptionEvent>(_onUpdateRecipeDescription);
     on<UpdateRecipeVideoUrlEvent>(_onUpdateRecipeVideoUrl);
     on<UpdateRecipeVideoFileEvent>(_onUpdateVideoFile);
-    on<UpdateRecipeVideoAwsKeyEvent>(_onUpdateVideoAwsKey);
     on<SubmitRecipeEvent>(_onSubmitRecipe);
-    on<UploadVideoToS3Event>(_onUploadVideoToS3);
     on<ResetSubmissionSuccessEvent>((e, emit) {
       emit(state.copyWith(submissionSuccess: false));
     });
@@ -63,7 +59,6 @@ class CocktailCreationBloc
         photo: null,
         videoFile: null,
         videoThumbnailFile: null,
-        videoAwsKey: null,
         videoUrl: '',
         title: '',
         description: '',
@@ -260,36 +255,6 @@ class CocktailCreationBloc
     emit(state.copyWith(videoFile: e.file));
   }
 
-  void _onUpdateVideoAwsKey(
-      UpdateRecipeVideoAwsKeyEvent e, Emitter<CocktailCreationState> emit) {
-    print('+++ Получен AWS ключ: ${e.awsKey}');
-    emit(state.copyWith(videoAwsKey: e.awsKey));
-  }
-
-  Future<void> _onUploadVideoToS3(
-    UploadVideoToS3Event e,
-    Emitter<CocktailCreationState> emit,
-  ) async {
-    try {
-      // 1) Генерим ключ
-      final s3Key = const Uuid().v4().substring(0, 12);
-
-      // 2) Получаем presigned URL
-      final uploadUrl = await repository.getVideoUploadUrl(s3Key);
-
-      // 3) Читаем байты
-      final bytes = await e.videoFile.readAsBytes();
-
-      // 4) Заливаем в S3
-      await repository.uploadVideoToS3(uploadUrl, bytes);
-
-      // 5) Сохраняем ключ в state
-      emit(state.copyWith(videoAwsKey: s3Key));
-    } catch (err) {
-      emit(state.copyWith(submissionError: err.toString()));
-    }
-  }
-
   Future<void> _onSubmitRecipe(
     SubmitRecipeEvent event,
     Emitter<CocktailCreationState> emit,
@@ -307,46 +272,7 @@ class CocktailCreationBloc
         ));
         return;
       }
-      String? awsKey;
-      // 1) Если видео выбрано — заливаем его в S3
-      if (state.videoFile != null) {
-        const accessKey = String.fromEnvironment('AWS_ACCESS_KEY_ID');
-        const secretKey = String.fromEnvironment('AWS_SECRET_ACCESS_KEY');
-        const region =
-            String.fromEnvironment('AWS_REGION', defaultValue: 'us-east-2');
-        const bucket = String.fromEnvironment('AWS_S3_BUCKET',
-            defaultValue: 'cocktails-video-bucket');
-        if (accessKey.isEmpty || secretKey.isEmpty) {
-          emit(state.copyWith(
-            isSubmitting: false,
-            submissionSuccess: false,
-            submissionError:
-                'Для загрузки видео задайте AWS_ACCESS_KEY_ID и AWS_SECRET_ACCESS_KEY '
-                '(например: flutter run --dart-define=AWS_ACCESS_KEY_ID=... --dart-define=AWS_SECRET_ACCESS_KEY=...).',
-          ));
-          return;
-        }
-        final String key = const Uuid().v4().substring(0, 12);
-        print('Uploading video to S3 with key $key...');
-        final String uploadedUrl = await AwsS3.uploadFile(
-          accessKey: accessKey,
-          secretKey: secretKey,
-          region: region,
-          bucket: bucket,
-          destDir: '',
-          filename: key,
-          file: state.videoFile!,
-          contentType: 'video/mp4',
-        );
-        if (uploadedUrl.isNotEmpty) {
-          awsKey = key;
-          print('Video uploaded: $uploadedUrl');
-        } else {
-          throw Exception('Video upload failed');
-        }
-      }
-
-      // 2) Собираем данные для запроса
+      // 1) Собираем данные для запроса
       // Удаляем дубли по ingredient.id, чтобы на бэке не было конфликтов
       final Map<int, IngredientItem> uniqueIngredients = {};
       for (final ing in state.ingredientItems) {
@@ -373,17 +299,22 @@ class CocktailCreationBloc
         'instruction': jsonEncode(instructions),
         'user': userId,
       };
-      // 3) Добавляем только видео-ключ, а не сам файл
-      if (awsKey != null) {
-        data['video_aws_key'] = awsKey;
-      } else if (state.videoUrl.isNotEmpty) {
+      if (state.videoFile != null) {
+        final path = state.videoFile!.path;
+        final name = path.replaceAll('\\', '/').split('/').last;
+        data['video_file'] = await MultipartFile.fromFile(
+          path,
+          filename: name.isNotEmpty ? name : 'video.mp4',
+        );
+      }
+      if (state.videoUrl.isNotEmpty) {
         data['video_url'] = state.videoUrl;
       }
       if (state.photo != null) {
         data['photo'] = await MultipartFile.fromFile(state.photo!.path);
       }
 
-      // 4) Отправляем рецепт
+      // 2) Отправляем рецепт
       await repository.createRecipe(data);
       emit(state.copyWith(
         isSubmitting: false,

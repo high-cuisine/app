@@ -1,12 +1,18 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/foundation.dart' show Factory;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class CocktailCardSlider extends StatefulWidget {
   final List<String> imageUrls;
+  /// Legacy S3 object key (prepended with [_s3BaseUrl]).
   final String? videoAvsKey;
   final String? videoUrl;
+  /// Uploaded recipe video (absolute URL from API `video_file_url`).
+  final String? videoFileUrl;
   final bool isImageAvailable;
 
   const CocktailCardSlider({
@@ -14,6 +20,7 @@ class CocktailCardSlider extends StatefulWidget {
     required this.imageUrls,
     this.videoAvsKey,
     this.videoUrl,
+    this.videoFileUrl,
     this.isImageAvailable = true,
   });
 
@@ -25,54 +32,66 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
   static const _s3BaseUrl =
       'https://cocktails-video-bucket.s3.eu-central-1.amazonaws.com/';
 
-  VideoPlayerController?
-      _videoController; // Made nullable to avoid late initialization error
-  YoutubePlayerController? _youtubeController;
+  VideoPlayerController? _videoController;
+  String? _youtubeVideoId;
   int _current = 0;
 
   @override
   void initState() {
     super.initState();
+    _bindMediaFromWidget();
+  }
 
-    if (widget.videoUrl != null && widget.videoUrl!.isNotEmpty) {
-      // Check if the video URL is a YouTube URL
-      if (_isYouTubeUrl(widget.videoUrl!)) {
-        final videoId = _extractYouTubeVideoId(widget.videoUrl!);
-        if (videoId != null) {
-          _initYouTubePlayerWithId(videoId);
+  @override
+  void didUpdateWidget(CocktailCardSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.videoFileUrl == oldWidget.videoFileUrl &&
+        widget.videoUrl == oldWidget.videoUrl &&
+        widget.videoAvsKey == oldWidget.videoAvsKey) {
+      return;
+    }
+    _bindMediaFromWidget();
+    setState(() {});
+  }
+
+  void _bindMediaFromWidget() {
+    _videoController?.dispose();
+    _videoController = null;
+    _youtubeVideoId = null;
+
+    final fileUrl = widget.videoFileUrl?.trim();
+    final url = widget.videoUrl?.trim();
+    final legacyKey = widget.videoAvsKey?.trim();
+
+    if (fileUrl != null && fileUrl.isNotEmpty) {
+      _initNetworkVideoUri(_resolvePlaybackUri(fileUrl));
+    } else if (url != null && url.isNotEmpty) {
+      if (_isYouTubeUrl(url)) {
+        final videoId = _extractYouTubeVideoId(url);
+        if (videoId != null && videoId.isNotEmpty) {
+          _youtubeVideoId = videoId;
+          debugPrint('YouTube video ID: $videoId');
         } else {
           debugPrint(
               'Failed to extract YouTube video ID from URL: ${widget.videoUrl}');
         }
       } else {
-        // It's a direct video URL (S3, etc.)
-        _initVideoPlayer();
+        _initNetworkVideoUri(_resolvePlaybackUri(url));
       }
-    } else {
-      debugPrint('Video URL is empty or null');
-    }
-
-    if (widget.videoAvsKey != null && widget.videoAvsKey!.isNotEmpty) {
-      _initYouTubePlayer();
-    } else {
-      debugPrint('YouTube video key is empty or null');
+    } else if (legacyKey != null && legacyKey.isNotEmpty) {
+      _initNetworkVideoUri(Uri.parse('$_s3BaseUrl$legacyKey'));
     }
   }
 
-  void _initVideoPlayer() {
+  Uri _resolvePlaybackUri(String raw) {
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return Uri.parse(raw);
+    }
+    return Uri.parse('$_s3BaseUrl$raw');
+  }
+
+  void _initNetworkVideoUri(Uri videoUri) {
     try {
-      // Check if the URL is already a complete URL or just a path
-      final videoUrl = widget.videoUrl!;
-      final Uri videoUri;
-
-      if (videoUrl.startsWith('http://') || videoUrl.startsWith('https://')) {
-        // Already a complete URL
-        videoUri = Uri.parse(videoUrl);
-      } else {
-        // Relative path, append to S3 base URL
-        videoUri = Uri.parse(_s3BaseUrl + videoUrl);
-      }
-
       debugPrint('Initializing video player with URL: $videoUri');
       _videoController = VideoPlayerController.networkUrl(videoUri)
         ..initialize().then((_) {
@@ -87,34 +106,25 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
     }
   }
 
-  void _initYouTubePlayer() {
+  Future<void> _openYoutubeExternally() async {
+    final url = widget.videoUrl?.trim();
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
     try {
-      _youtubeController = YoutubePlayerController(
-        initialVideoId: widget.videoAvsKey!,
-        flags: const YoutubePlayerFlags(
-          autoPlay: false,
-          mute: false,
-          showLiveFullscreenButton: false,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error creating YouTube controller: $e');
-    }
-  }
-
-  void _initYouTubePlayerWithId(String videoId) {
-    try {
-      _youtubeController = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: false,
-          mute: false,
-          showLiveFullscreenButton: false,
-        ),
-      );
-      debugPrint('YouTube player initialized with video ID: $videoId');
-    } catch (e) {
-      debugPrint('Error creating YouTube controller with video ID: $e');
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(content: Text('Не удалось открыть ссылку')),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('launchUrl YouTube: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
     }
   }
 
@@ -122,28 +132,37 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
     return url.contains('youtube.com') || url.contains('youtu.be');
   }
 
+  /// Same patterns as former `YoutubePlayer.convertUrlToId` plus query `v` / shorts.
   String? _extractYouTubeVideoId(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return null;
+    final trimmed = url.trim();
+    for (final exp in [
+      RegExp(
+          r'^https:\/\/(?:www\.|m\.)?youtube\.com\/watch\?v=([_\-a-zA-Z0-9]{11})'),
+      RegExp(
+          r'^https:\/\/(?:music\.)?youtube\.com\/watch\?v=([_\-a-zA-Z0-9]{11})'),
+      RegExp(
+          r'^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([_\-a-zA-Z0-9]{11})'),
+      RegExp(
+          r'^https:\/\/(?:www\.|m\.)?youtube(?:-nocookie)?\.com\/embed\/([_\-a-zA-Z0-9]{11})'),
+      RegExp(r'^https:\/\/youtu\.be\/([_\-a-zA-Z0-9]{11})'),
+    ]) {
+      final m = exp.firstMatch(trimmed);
+      if (m != null && m.groupCount >= 1) return m.group(1);
+    }
 
-    // Handle youtube.com URLs
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
     if (uri.host.contains('youtube.com')) {
-      // Handle /watch?v= format (regular videos)
       if (uri.queryParameters.containsKey('v')) {
         return uri.queryParameters['v'];
       }
-
-      // Handle /shorts/VIDEO_ID format (YouTube Shorts)
       if (uri.pathSegments.length >= 2 && uri.pathSegments[0] == 'shorts') {
         return uri.pathSegments[1];
       }
     }
-
-    // Handle youtu.be/VIDEO_ID format (short links)
-    if (uri.host.contains('youtu.be')) {
-      return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+    if (uri.host.contains('youtu.be') && uri.pathSegments.isNotEmpty) {
+      return uri.pathSegments.first;
     }
-
     return null;
   }
 
@@ -153,17 +172,13 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
 
     debugPrint('=== CocktailCardSlider Debug Info ===');
     debugPrint('ImageUrls count: ${widget.imageUrls.length}');
-    debugPrint('ImageUrls: ${widget.imageUrls}');
+    debugPrint('VideoFileUrl: ${widget.videoFileUrl}');
     debugPrint('VideoUrl: ${widget.videoUrl}');
-    debugPrint('VideoAvsKey: ${widget.videoAvsKey}');
-    debugPrint(
-        'IsYouTubeUrl: ${widget.videoUrl != null ? _isYouTubeUrl(widget.videoUrl!) : false}');
+    debugPrint('YouTube video id: $_youtubeVideoId');
     debugPrint('VideoController initialized: ${_videoController != null}');
-    debugPrint('YouTubeController initialized: ${_youtubeController != null}');
-    // — картинки
+
     if (widget.imageUrls.isNotEmpty) {
       for (final url in widget.imageUrls) {
-        // Server now provides direct URLs, no client-side conversion needed
         mediaWidgets.add(
           Image.network(
             url,
@@ -189,7 +204,6 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
             },
             errorBuilder: (context, error, stackTrace) {
               debugPrint('Error loading image: $error');
-              debugPrint('Image URL: $url');
               return Container(
                 width: double.infinity,
                 height: double.infinity,
@@ -216,12 +230,13 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
       }
     }
 
-    // — видео S3
     if (_videoController != null && _videoController!.value.isInitialized) {
       mediaWidgets.add(GestureDetector(
         onTap: () {
           if (_videoController == null ||
-              !_videoController!.value.isInitialized) return;
+              !_videoController!.value.isInitialized) {
+            return;
+          }
           _videoController!.value.isPlaying
               ? _videoController!.pause()
               : _videoController!.play();
@@ -230,58 +245,85 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            if (_videoController != null &&
-                _videoController!.value.isInitialized)
-              AspectRatio(
-                aspectRatio: _videoController!.value.aspectRatio,
-                child: VideoPlayer(_videoController!),
-              )
-            else
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: Colors.grey,
-                child: const Center(child: CircularProgressIndicator()),
+            AspectRatio(
+              aspectRatio: _videoController!.value.aspectRatio,
+              child: VideoPlayer(_videoController!),
+            ),
+            CircleAvatar(
+              backgroundColor: Colors.black54,
+              radius: 30,
+              child: Icon(
+                _videoController!.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+                color: Colors.white,
+                size: 30,
               ),
-            if (_videoController != null &&
-                _videoController!.value.isInitialized)
-              CircleAvatar(
-                backgroundColor: Colors.black54,
-                radius: 30,
-                child: Icon(
-                  _videoController!.value.isPlaying
-                      ? Icons.pause
-                      : Icons.play_arrow,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
+            ),
           ],
         ),
       ));
     }
-    // — или видео YouTube
-    else if (_youtubeController != null) {
+
+    if (_youtubeVideoId != null && _youtubeVideoId!.isNotEmpty) {
       mediaWidgets.add(
-        GestureDetector(
-          onTap: () {
-            // No specific hint needed for YouTube as it's handled by the player
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+            final maxH = constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : MediaQuery.sizeOf(context).height * 0.4;
+            final h = (w * 9 / 16).clamp(180.0, maxH);
+            return ColoredBox(
+              color: Colors.black,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: w,
+                    height: h,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: _RecipeYoutubeWebView(
+                        key: ValueKey<String>(_youtubeVideoId!),
+                        videoId: _youtubeVideoId!,
+                      ),
+                    ),
+                  ),
+                  if (widget.videoUrl != null &&
+                      widget.videoUrl!.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: TextButton.icon(
+                        onPressed: _openYoutubeExternally,
+                        icon: const Icon(Icons.open_in_new,
+                            color: Colors.white70, size: 20),
+                        label: const Text(
+                          'Открыть в YouTube',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
           },
-          child: YoutubePlayer(
-            controller: _youtubeController!,
-            showVideoProgressIndicator: true,
-            bottomActions: const [
-              CurrentPosition(),
-              ProgressBar(isExpanded: true),
-              RemainingDuration(),
-            ],
-          ),
         ),
       );
     }
 
-    // индикатор всего
     debugPrint('⚡️ mediaWidgets.length = ${mediaWidgets.length}');
+
+    if (mediaWidgets.isEmpty) {
+      return const ColoredBox(
+        color: Color(0xFF1C1C1E),
+        child: Center(
+          child: Icon(Icons.local_bar, color: Colors.white24, size: 48),
+        ),
+      );
+    }
 
     return Column(
       children: [
@@ -299,12 +341,10 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
               enlargeCenterPage: false,
               onPageChanged: (i, _) {
                 setState(() => _current = i);
-                // No hint needed for video on last slide as it's handled by the player
               },
             ),
           ),
         ),
-        // точки
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
@@ -326,8 +366,73 @@ class _CocktailCardSliderState extends State<CocktailCardSlider> {
 
   @override
   void dispose() {
-    _videoController?.dispose(); // Safe disposal with null check
-    _youtubeController?.dispose();
+    _videoController?.dispose();
     super.dispose();
+  }
+}
+
+/// Встроенный YouTube через стандартный WebView: стабильнее InAppWebView внутри Sliver + карусели.
+class _RecipeYoutubeWebView extends StatefulWidget {
+  const _RecipeYoutubeWebView({super.key, required this.videoId});
+
+  final String videoId;
+
+  @override
+  State<_RecipeYoutubeWebView> createState() => _RecipeYoutubeWebViewState();
+}
+
+class _RecipeYoutubeWebViewState extends State<_RecipeYoutubeWebView> {
+  late final WebViewController _controller;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final embedUri = Uri.https(
+      'www.youtube-nocookie.com',
+      '/embed/${widget.videoId}',
+      const {
+        'playsinline': '1',
+        'rel': '0',
+      },
+    );
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onWebResourceError: (WebResourceError e) {
+            if (mounted) {
+              setState(() => _error = e.description);
+            }
+            debugPrint('YouTube WebView error: ${e.description}');
+          },
+        ),
+      )
+      ..loadRequest(embedUri);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ),
+      );
+    }
+
+    return WebViewWidget(
+      controller: _controller,
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
+      },
+    );
   }
 }

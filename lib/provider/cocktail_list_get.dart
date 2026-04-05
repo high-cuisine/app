@@ -521,25 +521,4 @@ class CocktailRepository {
     }
   }
 
-  Future<String> getVideoUploadUrl(String s3Key) async {
-    final resp = await dio.get(
-      '/admin/recipe/video-upload-url/',
-      queryParameters: {'s3_key': s3Key},
-    );
-    // Предполагаем, что бэк вернёт JSON: { "upload_url": "https://..." }
-    return resp.data['upload_url'] as String;
-  }
-
-  /// 2) Загрузка байтов видео на presigned URL
-  Future<void> uploadVideoToS3(String uploadUrl, List<int> bytes) async {
-    // Отдельный Dio без ваших базовых опций (нужен публичный S3 URL)
-    final s3client = Dio();
-    await s3client.put(
-      uploadUrl,
-      data: Stream.fromIterable([bytes]),
-      options: Options(
-        headers: {'Content-Type': 'video/mp4'},
-      ),
-    );
-  }
 }
